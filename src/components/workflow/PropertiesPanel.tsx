@@ -76,6 +76,12 @@ export const PropertiesPanel = ({ selectedElement }: PropertiesPanelProps) => {
           >
             I/O
           </TabsTrigger>
+          <TabsTrigger
+            value="extensions"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs"
+          >
+            Extensions
+          </TabsTrigger>
         </TabsList>
 
         <ScrollArea className="flex-1">
@@ -381,6 +387,43 @@ export const PropertiesPanel = ({ selectedElement }: PropertiesPanelProps) => {
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{param.source} → {param.target}</div>
                         <div className="text-[10px] text-muted-foreground">{param.type}</div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="extensions" className="p-4 space-y-4 m-0">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold">Camunda Extensions</h4>
+                <Button variant="ghost" size="sm" className="h-6 text-xs">
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Property
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Properties</Label>
+                {[
+                  { key: "slaMinutes", value: "120" },
+                  { key: "notifyEmail", value: "${assignee.email}" },
+                ].map((prop, index) => (
+                  <div key={index} className="p-2 bg-muted/50 rounded text-xs">
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium font-mono">{prop.key}</div>
+                        <div className="text-[10px] text-muted-foreground font-mono">{prop.value}</div>
                       </div>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
