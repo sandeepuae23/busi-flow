@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
+import minimapModule from "diagram-js-minimap";
 import "bpmn-js/dist/assets/diagram-js.css";
 import "bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css";
+import "diagram-js-minimap/assets/diagram-js-minimap.css";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, Maximize2, MousePointer, Hand, Search, Square, MessageSquare } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -168,6 +170,9 @@ export const BpmnCanvas = ({ onElementSelect }: BpmnCanvasProps) => {
       keyboard: {
         bindTo: window,
       },
+      additionalModules: [
+        minimapModule
+      ],
     });
 
     modelerInstance
@@ -293,12 +298,6 @@ export const BpmnCanvas = ({ onElementSelect }: BpmnCanvasProps) => {
         </div>
       </div>
 
-      {/* Minimap */}
-      <div className="absolute bottom-6 left-6 w-48 h-32 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
-        <div className="w-full h-full bg-canvas/50 flex items-center justify-center">
-          <span className="text-xs text-muted-foreground">Minimap</span>
-        </div>
-      </div>
     </div>
   );
 };
