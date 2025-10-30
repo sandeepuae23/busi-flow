@@ -47,22 +47,40 @@ export const WorkflowToolbar = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImportBPMN = () => {
+    if (!modeler) {
+      toast.error("Workflow designer not ready. Please wait a moment and try again.");
+      console.error("Modeler not initialized");
+      return;
+    }
+    console.log("Opening file dialog for BPMN import");
     fileInputRef.current?.click();
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !modeler) return;
+    if (!file) {
+      console.log("No file selected");
+      return;
+    }
 
+    if (!modeler) {
+      toast.error("Workflow designer not ready");
+      console.error("Modeler not available during import");
+      return;
+    }
+
+    console.log("Importing BPMN file:", file.name);
+    
     try {
       const xml = await file.text();
+      console.log("File read successfully, importing XML...");
       await modeler.importXML(xml);
       toast.success("BPMN diagram imported successfully");
       const canvas = modeler.get("canvas") as any;
       canvas.zoom("fit-viewport");
     } catch (error) {
       console.error("Error importing BPMN:", error);
-      toast.error("Failed to import BPMN diagram");
+      toast.error("Failed to import BPMN diagram. Please check the file format.");
     }
     
     // Reset input
@@ -73,17 +91,22 @@ export const WorkflowToolbar = ({
 
   const handleExportBPMN = async () => {
     if (!modeler) {
-      toast.error("Modeler not ready");
+      toast.error("Workflow designer not ready. Please wait a moment and try again.");
+      console.error("Modeler not initialized");
       return;
     }
 
+    console.log("Exporting BPMN diagram...");
+    
     try {
       const { xml } = await modeler.saveXML({ format: true });
       if (!xml) {
         toast.error("Failed to generate XML");
+        console.error("saveXML returned empty");
         return;
       }
 
+      console.log("XML generated successfully, downloading...");
       const blob = new Blob([xml], { type: "application/xml" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -103,25 +126,37 @@ export const WorkflowToolbar = ({
 
   const handleExportImage = async () => {
     if (!modeler) {
-      toast.error("Modeler not ready");
+      toast.error("Workflow designer not ready. Please wait a moment and try again.");
+      console.error("Modeler not initialized");
       return;
     }
 
+    console.log("Exporting diagram as image...");
+    
     try {
-      const canvas = modeler.get("canvas") as any;
       const { svg } = await modeler.saveSVG();
       
       if (!svg) {
         toast.error("Failed to generate SVG");
+        console.error("saveSVG returned empty");
         return;
       }
 
+      console.log("SVG generated, converting to PNG...");
+      
       // Convert SVG to PNG using canvas
       const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
       const url = URL.createObjectURL(svgBlob);
       const img = new Image();
       
+      img.onerror = (error) => {
+        console.error("Error loading SVG image:", error);
+        toast.error("Failed to convert diagram to image");
+        URL.revokeObjectURL(url);
+      };
+      
       img.onload = () => {
+        console.log("Image loaded, creating canvas...");
         const canvas = document.createElement("canvas");
         canvas.width = img.width;
         canvas.height = img.height;
@@ -134,6 +169,7 @@ export const WorkflowToolbar = ({
           
           canvas.toBlob((blob) => {
             if (blob) {
+              console.log("PNG created, downloading...");
               const pngUrl = URL.createObjectURL(blob);
               const link = document.createElement("a");
               link.href = pngUrl;
@@ -143,8 +179,14 @@ export const WorkflowToolbar = ({
               document.body.removeChild(link);
               URL.revokeObjectURL(pngUrl);
               toast.success("Diagram exported as image successfully");
+            } else {
+              console.error("Failed to create blob from canvas");
+              toast.error("Failed to create image file");
             }
           }, "image/png");
+        } else {
+          console.error("Failed to get canvas context");
+          toast.error("Failed to create image");
         }
         
         URL.revokeObjectURL(url);
