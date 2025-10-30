@@ -3,7 +3,8 @@ import BpmnModeler from "bpmn-js/lib/Modeler";
 import "bpmn-js/dist/assets/diagram-js.css";
 import "bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css";
 import { Button } from "@/components/ui/button";
-import { ZoomIn, ZoomOut, Maximize2, Minimize2 } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, MousePointer, Hand, Search, Square, MessageSquare } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 const initialDiagram = `<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
@@ -224,8 +225,39 @@ export const BpmnCanvas = ({ onElementSelect }: BpmnCanvasProps) => {
   };
 
   return (
-    <div className="relative flex-1 bg-canvas">
-      <div ref={containerRef} className="h-full w-full" />
+    <div className="relative flex-1 bg-canvas flex flex-col">
+      {/* Canvas Toolbar */}
+      <div className="bg-toolbar border-b border-border px-3 py-2">
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+            <MousePointer className="h-4 w-4 mr-1" />
+            Select
+          </Button>
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+            <Hand className="h-4 w-4 mr-1" />
+            Hand Tool
+          </Button>
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+            <Search className="h-4 w-4 mr-1" />
+            Zoom
+          </Button>
+          <Separator orientation="vertical" className="h-6 mx-1" />
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+            <Square className="h-4 w-4 mr-1" />
+            Create Pool
+          </Button>
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+            <Square className="h-4 w-4 mr-1" />
+            Create Lane
+          </Button>
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+            <MessageSquare className="h-4 w-4 mr-1" />
+            Add Comment
+          </Button>
+        </div>
+      </div>
+
+      <div ref={containerRef} className="flex-1 w-full" />
       
       {/* Canvas Controls */}
       <div className="absolute bottom-6 right-6 flex flex-col gap-2 bg-card border border-border rounded-lg shadow-lg p-2">
