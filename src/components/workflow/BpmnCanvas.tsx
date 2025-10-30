@@ -155,9 +155,10 @@ const initialDiagram = `<?xml version="1.0" encoding="UTF-8"?>
 
 interface BpmnCanvasProps {
   onElementSelect: (element: any) => void;
+  onModelerReady?: (modeler: BpmnModeler) => void;
 }
 
-export const BpmnCanvas = ({ onElementSelect }: BpmnCanvasProps) => {
+export const BpmnCanvas = ({ onElementSelect, onModelerReady }: BpmnCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [modeler, setModeler] = useState<BpmnModeler | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -197,11 +198,12 @@ export const BpmnCanvas = ({ onElementSelect }: BpmnCanvasProps) => {
       });
 
     setModeler(modelerInstance);
+    onModelerReady?.(modelerInstance);
 
     return () => {
       modelerInstance.destroy();
     };
-  }, [onElementSelect]);
+  }, [onElementSelect, onModelerReady]);
 
   const handleZoomIn = () => {
     if (modeler) {

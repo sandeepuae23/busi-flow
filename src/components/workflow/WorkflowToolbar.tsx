@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import type BpmnModeler from "bpmn-js/lib/Modeler";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,10 +25,12 @@ import {
   Maximize,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface WorkflowToolbarProps {
   workflowName: string;
   workflowStatus: "deployed" | "draft";
+  modeler: BpmnModeler | null;
   onSave: () => void;
   onTest: () => void;
   onDeploy: () => void;
@@ -35,10 +39,124 @@ interface WorkflowToolbarProps {
 export const WorkflowToolbar = ({
   workflowName,
   workflowStatus,
+  modeler,
   onSave,
   onTest,
   onDeploy,
 }: WorkflowToolbarProps) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportBPMN = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !modeler) return;
+
+    try {
+      const xml = await file.text();
+      await modeler.importXML(xml);
+      toast.success("BPMN diagram imported successfully");
+      const canvas = modeler.get("canvas") as any;
+      canvas.zoom("fit-viewport");
+    } catch (error) {
+      console.error("Error importing BPMN:", error);
+      toast.error("Failed to import BPMN diagram");
+    }
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleExportBPMN = async () => {
+    if (!modeler) {
+      toast.error("Modeler not ready");
+      return;
+    }
+
+    try {
+      const { xml } = await modeler.saveXML({ format: true });
+      if (!xml) {
+        toast.error("Failed to generate XML");
+        return;
+      }
+
+      const blob = new Blob([xml], { type: "application/xml" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${workflowName}.bpmn`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success("BPMN diagram exported successfully");
+    } catch (error) {
+      console.error("Error exporting BPMN:", error);
+      toast.error("Failed to export BPMN diagram");
+    }
+  };
+
+  const handleExportImage = async () => {
+    if (!modeler) {
+      toast.error("Modeler not ready");
+      return;
+    }
+
+    try {
+      const canvas = modeler.get("canvas") as any;
+      const { svg } = await modeler.saveSVG();
+      
+      if (!svg) {
+        toast.error("Failed to generate SVG");
+        return;
+      }
+
+      // Convert SVG to PNG using canvas
+      const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        
+        if (ctx) {
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const pngUrl = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = pngUrl;
+              link.download = `${workflowName}.png`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(pngUrl);
+              toast.success("Diagram exported as image successfully");
+            }
+          }, "image/png");
+        }
+        
+        URL.revokeObjectURL(url);
+      };
+      
+      img.src = url;
+    } catch (error) {
+      console.error("Error exporting image:", error);
+      toast.error("Failed to export diagram as image");
+    }
+  };
+
   return (
     <div className="bg-toolbar border-b border-border">
       {/* Menu Bar */}
@@ -57,9 +175,9 @@ export const WorkflowToolbar = ({
             <DropdownMenuItem>Save As...</DropdownMenuItem>
             <DropdownMenuItem>Save As Version...</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Import BPMN...</DropdownMenuItem>
-            <DropdownMenuItem>Export BPMN...</DropdownMenuItem>
-            <DropdownMenuItem>Export as Image</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleImportBPMN}>Import BPMN...</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportBPMN}>Export BPMN...</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportImage}>Export as Image</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -156,14 +274,21 @@ export const WorkflowToolbar = ({
             <Save className="h-4 w-4 mr-2" />
             Save
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleImportBPMN}>
             <Download className="h-4 w-4 mr-2" />
             Import
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExportBPMN}>
             <Upload className="h-4 w-4 mr-2" />
             Export
           </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".bpmn,.xml"
+            onChange={handleFileChange}
+            style={{ display: "none" }}
+          />
           <div className="h-6 w-px bg-border mx-2" />
           <Button variant="outline" size="sm" onClick={onTest}>
             <Play className="h-4 w-4 mr-2" />
